@@ -1,0 +1,1231 @@
+<title>Victor Soler · Save File</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&display=swap">
+
+<style>
+  :root{
+    --void:#0d0b16;
+    --panel:#1d1936;
+    --panel-hi:#272147;
+    --line:#3b3268;
+    --ink:#f2e9dc;
+    --ink-dim:#a79ec4;
+    --magenta:#ff4d8d;
+    --cyan:#5bd1ff;
+    --gold:#ffc23d;
+    --lime:#7ef29d;
+
+    --px:4px;
+    --font-hud:"Silkscreen","Courier New",monospace;
+    --font-body:"VT323","Courier New",monospace;
+
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    background:var(--void);
+    background-image:
+      radial-gradient(ellipse at 50% 0%, #241d45 0%, transparent 60%),
+      linear-gradient(var(--void), var(--void));
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:20px;
+    line-height:1.45;
+  }
+
+  .crt{
+    position:fixed; inset:0; pointer-events:none; z-index:90;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
+      rgba(0,0,0,.20) 3px, rgba(0,0,0,.20) 4px);
+  }
+  .vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:91;
+    background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.5) 100%);
+  }
+
+  :root[data-lang="en"] .i18n-es{display:none;}
+  :root:not([data-lang="en"]) .i18n-en{display:none;}
+
+  .hud{
+    position:sticky; top:env(safe-area-inset-top, 0px); z-index:80;
+    background:var(--void); border-bottom:var(--px) solid var(--line);
+    font-family:var(--font-hud);
+  }
+  .hud-in{
+    max-width:1040px; margin:0 auto;
+    padding-block:10px; padding-inline:16px;
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    font-size:11px; letter-spacing:.06em;
+  }
+  .hud-name{color:var(--ink);}
+  .hud-name b{color:var(--magenta);}
+  .hud-lv{
+    font-family:var(--font-hud); font-size:11px;
+    color:var(--gold); background:var(--panel);
+    border:2px solid var(--line); padding:4px 8px;
+    cursor:pointer; user-select:none;
+  }
+  .hud-lv:focus-visible{outline:3px solid var(--cyan); outline-offset:2px;}
+
+  /* one-off "click me" hand, dismissed for good on first press */
+  .hand{
+    display:none; image-rendering:pixelated;
+    width:36px; height:27px; flex:0 0 auto;
+    margin-left:-4px;
+    animation:nudge 1.1s ease-in-out infinite;
+  }
+  .hand.show{display:block;}
+  @keyframes nudge{
+    0%,100%{transform:translateX(0);}
+    50%{transform:translateX(-7px);}
+  }
+
+  .hud-spacer{flex:1 1 auto;}
+  .lang{display:flex; align-items:center; gap:6px;}
+  .lang-label{color:var(--ink-dim); font-size:10px;}
+  .lang-btn{
+    font-family:var(--font-hud); font-size:11px;
+    background:var(--panel); color:var(--ink-dim);
+    border:2px solid var(--line); padding:4px 8px; cursor:pointer;
+  }
+  .lang-btn[aria-pressed="true"]{background:var(--magenta); color:var(--void); border-color:var(--magenta);}
+  .lang-btn:focus-visible{outline:3px solid var(--cyan); outline-offset:2px;}
+
+  .wrap{
+    max-width:1040px; margin:0 auto;
+    padding-inline:16px; padding-block:28px 56px;
+    display:flex; flex-direction:column; gap:40px;
+  }
+
+  .panel{
+    background:var(--panel); border:var(--px) solid var(--line);
+    box-shadow:6px 6px 0 rgba(0,0,0,.55); padding:20px;
+  }
+
+  h1,h2,h3{font-family:var(--font-hud); font-weight:700; margin:0; text-wrap:balance;}
+
+  .sect-head{display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;}
+  .sect-head h2{font-size:14px; letter-spacing:.08em; color:var(--cyan);}
+  .sect-head .rule{
+    flex:1 1 60px; height:var(--px); min-width:40px;
+    background:repeating-linear-gradient(to right, var(--line) 0 8px, transparent 8px 12px);
+  }
+  .sect-head .count{font-family:var(--font-hud); font-size:10px; color:var(--ink-dim);}
+
+  .hero{display:grid; grid-template-columns:auto 1fr; gap:24px; align-items:start;}
+  .sprite-box{
+    background:var(--void); border:var(--px) solid var(--magenta);
+    padding:10px; display:grid; place-items:center;
+  }
+  #sprite{image-rendering:pixelated; display:block; width:132px; height:132px; max-width:100%;}
+
+  .hero h1{font-size:clamp(18px,4.4vw,30px); line-height:1.25; color:var(--ink);}
+  .hero .class{font-family:var(--font-hud); font-size:11px; letter-spacing:.06em; color:var(--gold); margin-top:8px;}
+  .meta{margin-top:10px; display:flex; flex-wrap:wrap; gap:6px 16px; color:var(--ink-dim); font-size:19px;}
+  .meta span::before{content:"\25AA  "; color:var(--magenta);}
+  .tagline{margin-top:14px; max-width:62ch; color:var(--ink);}
+
+  .xp{margin-top:16px;}
+  .xp-top{
+    display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    font-family:var(--font-hud); font-size:10px; color:var(--ink-dim);
+    letter-spacing:.06em; margin-bottom:6px;
+  }
+  .bar{height:16px; background:var(--void); border:2px solid var(--line); padding:2px;}
+  .bar i{display:block; height:100%; background:var(--magenta);}
+  .bar.cyan i{background:var(--cyan);}
+  .bar.gold i{background:var(--gold);}
+  .bar.lime i{background:var(--lime);}
+
+  .menu{margin-top:20px; display:flex; flex-wrap:wrap; gap:10px;}
+  .btn{
+    font-family:var(--font-hud); font-size:11px; letter-spacing:.04em;
+    text-decoration:none; display:inline-block; padding:10px 14px;
+    background:var(--panel-hi); color:var(--ink);
+    border:2px solid var(--line); box-shadow:3px 3px 0 rgba(0,0,0,.6);
+  }
+  .btn:hover,.btn:focus-visible{
+    background:var(--magenta); color:var(--void); border-color:var(--magenta);
+    transform:translate(1px,1px); box-shadow:2px 2px 0 rgba(0,0,0,.6);
+  }
+  .btn:focus-visible{outline:3px solid var(--cyan); outline-offset:2px;}
+  .btn.primary{background:var(--gold); color:var(--void); border-color:var(--gold);}
+  .btn.primary:hover,.btn.primary:focus-visible{background:var(--ink); border-color:var(--ink); color:var(--void);}
+
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(258px,1fr)); gap:16px 28px;}
+  .stat-top{
+    display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+    font-family:var(--font-hud); font-size:10px; letter-spacing:.05em;
+    margin-bottom:5px; line-height:1.6;
+  }
+  .stat-top .val{color:var(--gold); font-variant-numeric:tabular-nums; flex:0 0 auto;}
+  .stat-note{font-size:17px; color:var(--ink-dim); margin-top:4px;}
+
+  .quests{display:flex; flex-direction:column; gap:20px;}
+  .quest{background:var(--panel); border:var(--px) solid var(--line); box-shadow:6px 6px 0 rgba(0,0,0,.55);}
+  .quest-bar{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    padding:10px 16px; background:var(--panel-hi); border-bottom:var(--px) solid var(--line);
+  }
+  .tag{font-family:var(--font-hud); font-size:9px; letter-spacing:.08em; padding:4px 7px; border:2px solid currentColor; flex:0 0 auto;}
+  .tag.boss{color:var(--magenta);}
+  .tag.main{color:var(--gold);}
+  .tag.live{color:var(--lime);}
+  .quest-bar h3{font-size:13px; color:var(--ink); flex:1 1 160px;}
+  .quest-body{padding:16px;}
+  .quest-body p{margin:0 0 12px; max-width:68ch;}
+  .obj{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+  .obj li{padding-left:24px; position:relative; max-width:68ch;}
+  .obj li::before{content:"\25B8"; position:absolute; left:4px; top:0; color:var(--cyan); font-family:var(--font-hud); font-size:11px;}
+  .obj b{color:var(--ink); font-weight:400; box-shadow:inset 0 -2px 0 var(--magenta);}
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:14px;}
+  .chip{
+    font-family:var(--font-hud); font-size:9px; letter-spacing:.04em;
+    background:var(--void); color:var(--cyan); border:2px solid var(--line); padding:5px 7px;
+  }
+  .note{font-size:18px; color:var(--ink-dim); margin:14px 0 0; max-width:70ch;}
+
+  .log{display:flex; flex-direction:column;}
+  .entry{display:grid; grid-template-columns:150px 1fr; gap:0 20px; padding-block:18px; border-top:2px dashed var(--line);}
+  .entry:first-child{border-top:0; padding-top:0;}
+  .when{font-family:var(--font-hud); font-size:10px; letter-spacing:.04em; color:var(--gold); padding-top:4px; line-height:1.7;}
+  .when small{display:block; color:var(--ink-dim); margin-top:6px; font-size:9px; line-height:1.8;}
+  .entry h3{font-size:12px; color:var(--ink); line-height:1.6;}
+  .entry .org{font-family:var(--font-hud); font-size:10px; color:var(--magenta); margin-top:6px; margin-bottom:10px; letter-spacing:.04em;}
+
+  .inv{display:grid; grid-template-columns:repeat(auto-fit,minmax(218px,1fr)); gap:18px;}
+  .slot h3{font-size:10px; color:var(--ink-dim); letter-spacing:.08em; padding-bottom:8px; border-bottom:2px solid var(--line); margin-bottom:10px;}
+  .slot .chips{margin-top:0;}
+
+  .achv{display:grid; grid-template-columns:repeat(auto-fit,minmax(228px,1fr)); gap:12px;}
+  .badge{display:flex; gap:12px; align-items:flex-start; background:var(--void); border:2px solid var(--line); padding:12px;}
+  .badge .star{font-family:var(--font-hud); font-size:15px; color:var(--gold); line-height:1; flex:0 0 auto; margin-top:3px;}
+  .badge .t{font-family:var(--font-hud); font-size:10px; line-height:1.6; color:var(--ink); display:block;}
+  .badge .s{font-size:17px; color:var(--ink-dim); display:block; margin-top:4px;}
+  .badge.deg{border-color:var(--magenta);}
+  .badge.deg .star{color:var(--magenta);}
+
+  .contact-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px;}
+  .contact-list a{
+    color:var(--ink); text-decoration:none;
+    font-family:var(--font-hud); font-size:11px; letter-spacing:.03em;
+    display:inline-flex; gap:12px; align-items:baseline; flex-wrap:wrap;
+  }
+  .contact-list a::before{content:"\25B6"; color:var(--panel-hi);}
+  .contact-list a:hover::before,.contact-list a:focus-visible::before{color:var(--magenta);}
+  .contact-list a:hover,.contact-list a:focus-visible{color:var(--gold);}
+  .contact-list .k{color:var(--ink-dim); min-width:88px; display:inline-block;}
+  .contact-list a:focus-visible{outline:3px solid var(--cyan); outline-offset:3px;}
+
+  footer{text-align:center; font-family:var(--font-hud); font-size:9px; color:var(--ink-dim); line-height:2.4; letter-spacing:.06em;}
+  .konami{color:var(--panel-hi); font-size:11px; letter-spacing:.2em;}
+
+  /* ================= BATTLE ================= */
+  /* Display is driven by .is-open only, so nothing can leave it stuck open. */
+  .battle{
+    display:none;
+    position:fixed; inset:0; z-index:100;
+    background:rgba(5,4,12,.94);
+    place-items:center; padding:16px;
+    overflow-y:auto;
+  }
+  .battle.is-open{display:grid;}
+
+  .screen{
+    background:var(--void);
+    border:var(--px) solid var(--cyan);
+    box-shadow:0 0 0 6px var(--void), 8px 8px 0 rgba(0,0,0,.6);
+    width:100%; max-width:420px;
+  }
+
+  .screen-top{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    font-family:var(--font-hud); font-size:9px; color:var(--gold);
+    padding:8px 10px; border-bottom:2px solid var(--line); letter-spacing:.08em;
+  }
+  .screen-x{
+    font-family:var(--font-hud); font-size:10px; background:var(--panel);
+    color:var(--ink); border:2px solid var(--line); padding:5px 9px; cursor:pointer;
+  }
+  .screen-x:hover{background:var(--magenta); color:var(--void); border-color:var(--magenta);}
+  .screen-x:focus-visible{outline:3px solid var(--cyan); outline-offset:2px;}
+
+  #field{display:block; width:100%; height:auto; max-width:100%; image-rendering:pixelated; background:#150f28;}
+
+  .foe-line{
+    display:flex; align-items:center; gap:10px;
+    padding:8px 10px; border-top:2px solid var(--line); border-bottom:var(--px) solid var(--line);
+    font-family:var(--font-hud); font-size:10px; color:var(--ink);
+  }
+  .foe-line .nm{flex:1 1 auto;}
+  .foe-line .bar{flex:0 0 110px; height:12px;}
+
+  .battle-log{
+    padding:9px 10px; min-height:52px;
+    border-bottom:2px solid var(--line);
+    font-size:19px; color:var(--lime); line-height:1.4;
+  }
+  .battle-log div{margin:0;}
+  .battle-log .dim{color:var(--ink-dim);}
+
+  .cmd-wrap{display:grid; grid-template-columns:1fr 1fr; gap:0;}
+  .cmds{display:flex; flex-direction:column; padding:10px; gap:2px; border-right:2px solid var(--line);}
+  .cmd{
+    font-family:var(--font-hud); font-size:10px; text-align:left;
+    background:transparent; color:var(--ink); border:0; padding:7px 6px;
+    cursor:pointer; letter-spacing:.04em;
+  }
+  .cmd::before{content:"\25B6 "; color:transparent;}
+  .cmd:hover:not(:disabled)::before,.cmd:focus-visible::before{color:var(--magenta);}
+  .cmd:hover:not(:disabled),.cmd:focus-visible{color:var(--gold);}
+  .cmd:disabled{color:#5b537e; cursor:default;}
+  .cmd:focus-visible{outline:2px solid var(--cyan); outline-offset:-2px;}
+
+  .party{padding:10px; display:flex; flex-direction:column; gap:6px; font-family:var(--font-hud); font-size:9px;}
+  .party .row{display:flex; justify-content:space-between; gap:8px; align-items:center;}
+  .party .row span:first-child{color:var(--ink-dim);}
+  .party .num{color:var(--ink); font-variant-numeric:tabular-nums;}
+  .party .bar{height:10px; padding:1px;}
+
+  .again{
+    display:block; width:100%;
+    font-family:var(--font-hud); font-size:10px;
+    background:var(--gold); color:var(--void); border:0;
+    padding:11px; cursor:pointer; letter-spacing:.06em;
+  }
+  .again:hover{background:var(--ink);}
+  .again:focus-visible{outline:3px solid var(--cyan); outline-offset:-3px;}
+
+  @media (max-width:640px){
+    .hero{grid-template-columns:1fr;}
+    .entry{grid-template-columns:1fr; gap:10px;}
+    .when{padding-top:0;}
+    body{font-size:19px;}
+  }
+  @media (max-width:380px){
+    .cmd-wrap{grid-template-columns:1fr;}
+    .cmds{border-right:0; border-bottom:2px solid var(--line);}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important; transition:none !important;}
+    .crt{display:none;}
+  }
+</style>
+
+<script>
+  (function(){
+    var l = "es";
+    try { l = localStorage.getItem("vsp-lang") || "es"; } catch(e){}
+    l = (l === "en") ? "en" : "es";
+    document.documentElement.setAttribute("data-lang", l);
+    document.documentElement.lang = l;
+  })();
+</script>
+
+<div class="crt" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<header class="hud">
+  <div class="hud-in">
+    <span class="hud-name">&#9646; <b>VICTOR SOLER</b></span>
+    <button class="hud-lv" id="lvBadge" type="button">LV.04</button>
+    <canvas class="hand" id="handHint" width="36" height="27" aria-hidden="true"></canvas>
+    <span class="hud-spacer"></span>
+    <span class="lang">
+      <span class="lang-label">LANG</span>
+      <button class="lang-btn" type="button" data-set-lang="es" aria-pressed="true">ES</button>
+      <button class="lang-btn" type="button" data-set-lang="en" aria-pressed="false">EN</button>
+    </span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="panel hero" aria-label="Perfil">
+    <div class="sprite-box">
+      <canvas id="sprite" width="48" height="48" aria-hidden="true"></canvas>
+    </div>
+    <div>
+      <h1>Victor Soler Pauner</h1>
+      <div class="class">
+        <span class="i18n-es">CLASE &middot; DESARROLLADOR BACKEND / FULL STACK</span>
+        <span class="i18n-en">CLASS &middot; BACKEND / FULL STACK DEVELOPER</span>
+      </div>
+      <div class="meta">
+        <span>Castell&oacute;n, Espa&ntilde;a</span>
+        <span class="i18n-es">Grado en Matem&aacute;tica Computacional</span>
+        <span class="i18n-en">BSc Computational Mathematics</span>
+        <span class="i18n-es">Disponible para remoto</span>
+        <span class="i18n-en">Open to remote</span>
+      </div>
+      <p class="tagline">
+        <span class="i18n-es">Construyo software de gesti&oacute;n de punta a punta: APIs en .NET, front en Blazor, apps m&oacute;viles y los servidores Linux donde corre todo. Ahora mismo, el portal de comisiones de un grupo de distribuci&oacute;n y telecomunicaciones &mdash; y un producto de control horario que ya licenciamos a terceros.</span>
+        <span class="i18n-en">I build line-of-business software end to end: .NET APIs, Blazor front ends, mobile apps and the Linux servers they all run on. Right now: the commission portal of a retail &amp; telecom distribution group &mdash; and a time-tracking product we already license to outside clients.</span>
+      </p>
+
+      <div class="xp">
+        <div class="xp-top">
+          <span>EXP &middot; 2021 &#9656; 2026</span>
+          <span>4 <span class="i18n-es">A&Ntilde;OS EN IT</span><span class="i18n-en">YEARS IN IT</span></span>
+        </div>
+        <div class="bar gold"><i style="width:82%"></i></div>
+      </div>
+
+      <nav class="menu" aria-label="Enlaces">
+        <a class="btn primary" href="https://www.linkedin.com/in/victor-sp9" target="_blank" rel="noopener">LINKEDIN</a>
+        <a class="btn" href="https://github.com/Kurama71V" target="_blank" rel="noopener">GITHUB</a>
+        <a class="btn" href="mailto:victorsolerpauner@gmail.com">
+          <span class="i18n-es">ESCR&Iacute;BEME</span><span class="i18n-en">EMAIL ME</span>
+        </a>
+      </nav>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-stats">
+    <div class="sect-head">
+      <h2 id="h-stats"><span class="i18n-es">ESTAD&Iacute;STICAS</span><span class="i18n-en">STATS</span></h2>
+      <span class="rule"></span>
+    </div>
+    <div class="stats">
+      <div>
+        <div class="stat-top"><span>C# / .NET</span><span class="val">82</span></div>
+        <div class="bar"><i style="width:82%"></i></div>
+        <div class="stat-note">ASP.NET Core &middot; Blazor &middot; EF Core &middot; MAUI</div>
+      </div>
+      <div>
+        <div class="stat-top"><span>SQL <span class="i18n-es">&amp; BASES DE DATOS</span><span class="i18n-en">&amp; DATABASES</span></span><span class="val">78</span></div>
+        <div class="bar cyan"><i style="width:78%"></i></div>
+        <div class="stat-note">MySQL &middot; PostgreSQL &middot; SQLite &middot; MongoDB</div>
+      </div>
+      <div>
+        <div class="stat-top"><span>PYTHON</span><span class="val">74</span></div>
+        <div class="bar"><i style="width:74%"></i></div>
+        <div class="stat-note">FastAPI &middot; Django &middot; Flask &middot; Pandas &middot; Selenium</div>
+      </div>
+      <div>
+        <div class="stat-top"><span>JAVASCRIPT / TS</span><span class="val">66</span></div>
+        <div class="bar cyan"><i style="width:66%"></i></div>
+        <div class="stat-note">React &middot; Redux &middot; Vite &middot; Tailwind &middot; Node</div>
+      </div>
+      <div>
+        <div class="stat-top"><span><span class="i18n-es">DATOS &amp; AUTOMATIZACI&Oacute;N</span><span class="i18n-en">DATA &amp; AUTOMATION</span></span><span class="val">70</span></div>
+        <div class="bar"><i style="width:70%"></i></div>
+        <div class="stat-note"><span class="i18n-es">Scraping &middot; ETL &middot; Looker Studio &middot; informes autom&aacute;ticos</span><span class="i18n-en">Scraping &middot; ETL &middot; Looker Studio &middot; automated reporting</span></div>
+      </div>
+      <div>
+        <div class="stat-top"><span><span class="i18n-es">SISTEMAS &amp; REDES</span><span class="i18n-en">SYSTEMS &amp; NETWORKING</span></span><span class="val">62</span></div>
+        <div class="bar cyan"><i style="width:62%"></i></div>
+        <div class="stat-note">Linux (systemd) &middot; Docker &middot; Active Directory &middot; Zammad</div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-quests">
+    <div class="sect-head">
+      <h2 id="h-quests"><span class="i18n-es">MISIONES PRINCIPALES</span><span class="i18n-en">MAIN QUESTS</span></h2>
+      <span class="rule"></span>
+      <span class="count">02</span>
+    </div>
+
+    <div class="quests">
+
+      <article class="quest">
+        <div class="quest-bar">
+          <span class="tag boss">BOSS</span>
+          <h3>CHRONIA</h3>
+          <span class="tag live"><span class="i18n-es">EN PRODUCCI&Oacute;N</span><span class="i18n-en">SHIPPED</span></span>
+        </div>
+        <div class="quest-body">
+          <p>
+            <span class="i18n-es">Control horario, ausencias y flota. Naci&oacute; como un m&oacute;dulo dentro del portal interno y lo extraje despu&eacute;s como producto independiente y multiempresa.</span>
+            <span class="i18n-en">Time tracking, absences and fleet management. It started as a module inside the internal portal and I later extracted it into a standalone, multi-tenant product.</span>
+          </p>
+          <ul class="obj">
+            <li>
+              <span class="i18n-es"><b>API REST en .NET 9</b> con kernel propio: contrato de m&oacute;dulo, &aacute;mbito de empresa por petici&oacute;n e identidad separada de la aplicaci&oacute;n que la consume.</span>
+              <span class="i18n-en"><b>.NET 9 REST API</b> with its own kernel: module contract, per-request company scope and an identity separate from the app consuming it.</span>
+            </li>
+            <li>
+              <span class="i18n-es"><b>Consola web propia</b> en Blazor Server y un SDK: el portal original pas&oacute; a ser un cliente m&aacute;s de la API.</span>
+              <span class="i18n-en"><b>Its own web console</b> in Blazor Server plus an SDK: the original portal became just one more API client.</span>
+            </li>
+            <li>
+              <span class="i18n-es"><b>App m&oacute;vil .NET MAUI</b> (Android/iOS): fichaje con cola local en SQLite para trabajar sin cobertura, notificaciones, geolocalizaci&oacute;n de la jornada y autoservicio de documentos.</span>
+              <span class="i18n-en"><b>.NET MAUI mobile app</b> (Android/iOS): clock-in with a local SQLite queue to work offline, notifications, shift geolocation and document self-service.</span>
+            </li>
+            <li>
+              <span class="i18n-es"><b>Modularidad por licencia</b> firmada y verificada al arrancar. La puerta est&aacute; en el servidor &mdash;404 en el endpoint&mdash;, no en el men&uacute;. Esquema &uacute;nico: bajar de plan oculta datos, nunca borra tablas y nunca bloquea el fichaje.</span>
+              <span class="i18n-en"><b>Licensed modularity</b>: a signed licence verified at boot. The gate is server-side &mdash; a 404 on the endpoint, not a hidden menu item. Single schema: downgrading hides data, never drops tables and never blocks clock-in.</span>
+            </li>
+            <li>
+              <span class="i18n-es">En producci&oacute;n dentro del grupo <b>y en un segundo cliente ajeno a &eacute;l</b>, con su propia base de datos, licencia y consola.</span>
+              <span class="i18n-en">In production inside the group <b>and at a second client outside it</b>, with its own database, licence and console.</span>
+            </li>
+          </ul>
+          <div class="chips">
+            <span class="chip">.NET 9</span><span class="chip">ASP.NET CORE</span><span class="chip">BLAZOR SERVER</span>
+            <span class="chip">.NET MAUI</span><span class="chip">EF CORE</span><span class="chip">MYSQL</span>
+            <span class="chip">JWT</span><span class="chip">XUNIT</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="quest">
+        <div class="quest-bar">
+          <span class="tag main">MAIN</span>
+          <h3>J2J</h3>
+          <span class="tag live"><span class="i18n-es">EN PRODUCCI&Oacute;N</span><span class="i18n-en">SHIPPED</span></span>
+        </div>
+        <div class="quest-body">
+          <p>
+            <span class="i18n-es">Portal que liquida las comisiones de la red comercial del grupo y da a direcci&oacute;n la foto de lo que vende cada tienda y cada comercial. Sustituy&oacute; a un mont&oacute;n de hojas de c&aacute;lculo mantenidas a mano.</span>
+            <span class="i18n-en">The portal that settles the monthly commissions of the group's sales network and gives management a live picture of every store and salesperson. It replaced a pile of hand-maintained spreadsheets.</span>
+          </p>
+          <ul class="obj">
+            <li>
+              <span class="i18n-es"><b>Motor de conceptos configurable</b>: cada concepto retributivo (f&oacute;rmula, tramos, unidades, objetivos) se define desde la propia aplicaci&oacute;n, sin tocar c&oacute;digo.</span>
+              <span class="i18n-en"><b>Configurable pay-item engine</b>: every commission concept (formula, brackets, units, targets) is defined from the UI, with no code changes.</span>
+            </li>
+            <li>
+              <span class="i18n-es"><b>Marcos retributivos</b> para directores comerciales sobre objetivos de tienda y/o individuales, con reparto proporcional cuando alguien rota entre varias tiendas a mitad de mes.</span>
+              <span class="i18n-en"><b>Pay frameworks</b> for sales managers on store and/or individual targets, with a proportional split when someone rotates between stores mid-month.</span>
+            </li>
+            <li>
+              <span class="i18n-es"><b>Panel de direcci&oacute;n</b>: rankings por zona, productividad por comercial, informes de m&aacute;rgenes y res&uacute;menes autom&aacute;ticos por correo.</span>
+              <span class="i18n-en"><b>Management dashboard</b>: rankings by zone, productivity per salesperson, margin reports and automated e-mail summaries.</span>
+            </li>
+            <li>
+              <span class="i18n-es"><b>Multi-sociedad</b>: el filtrado por empresa cuelga del propio contexto de datos, as&iacute; que ninguna consulta puede cruzar sociedades por descuido.</span>
+              <span class="i18n-en"><b>Multi-company</b>: company filtering hangs off the data context itself, so no query can cross legal entities by accident.</span>
+            </li>
+            <li>
+              <span class="i18n-es"><b>~290.000 l&iacute;neas</b> de C# y Razor, 137 pantallas y 1.955 pruebas automatizadas.</span>
+              <span class="i18n-en"><b>~290k lines</b> of C# and Razor, 137 screens and 1,955 automated tests.</span>
+            </li>
+          </ul>
+          <div class="chips">
+            <span class="chip">.NET 9</span><span class="chip">BLAZOR SERVER</span><span class="chip">EF CORE</span>
+            <span class="chip">MYSQL</span><span class="chip">BOOTSTRAPBLAZOR</span><span class="chip">QUESTPDF</span>
+            <span class="chip">SERILOG</span><span class="chip">LINUX</span>
+          </div>
+        </div>
+      </article>
+
+    </div>
+    <p class="note">
+      <span class="i18n-es">&#9642; Ambos son productos propietarios de Grupo Ecoplana, as&iacute; que los repositorios son privados. Encantado de explicar la arquitectura y las decisiones que hay detr&aacute;s.</span>
+      <span class="i18n-en">&#9642; Both are proprietary products built at Grupo Ecoplana, so the repositories are private. Happy to walk through the architecture and the trade-offs behind it.</span>
+    </p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-log">
+    <div class="sect-head">
+      <h2 id="h-log"><span class="i18n-es">REGISTRO DE MISIONES</span><span class="i18n-en">QUEST LOG</span></h2>
+      <span class="rule"></span>
+      <span class="count">03</span>
+    </div>
+    <div class="log">
+
+      <article class="entry">
+        <div class="when">
+          <span class="i18n-es">AGO 2025 &#9656; HOY</span><span class="i18n-en">AUG 2025 &#9656; NOW</span>
+          <small><span class="i18n-es">Castell&oacute;n &middot; Presencial</span><span class="i18n-en">Castell&oacute;n &middot; On-site</span></small>
+        </div>
+        <div>
+          <h3><span class="i18n-es">T&Eacute;CNICO INFORM&Aacute;TICO / DESARROLLADOR</span><span class="i18n-en">IT TECHNICIAN / DEVELOPER</span></h3>
+          <div class="org">GRUPO ECOPLANA SL</div>
+          <ul class="obj">
+            <li>
+              <span class="i18n-es">Desarrollo de <b>J2J</b> y <b>Chronia</b> de punta a punta: requisitos con direcci&oacute;n, arquitectura, c&oacute;digo, pruebas, despliegue y soporte en producci&oacute;n.</span>
+              <span class="i18n-en">Built <b>J2J</b> and <b>Chronia</b> end to end: requirements with management, architecture, code, tests, deployment and production support.</span>
+            </li>
+            <li>
+              <span class="i18n-es">Integraciones y automatizaciones en C# y Python: ERP de ventas, Factorial, Paperless-ngx, CRM, telefon&iacute;a IP y monitorizaci&oacute;n de servidores.</span>
+              <span class="i18n-en">Integrations and automations in C# and Python: sales ERP, Factorial, Paperless-ngx, CRM, IP telephony and server monitoring.</span>
+            </li>
+            <li>
+              <span class="i18n-es">Redes y servidores Linux/Windows para sistemas de distribuci&oacute;n, reduciendo incidencias de conectividad y asegurando alta disponibilidad.</span>
+              <span class="i18n-en">Linux/Windows networking and servers for distribution systems, cutting connectivity incidents and keeping high availability.</span>
+            </li>
+            <li>
+              <span class="i18n-es">Administraci&oacute;n de <b>Active Directory</b> y pol&iacute;ticas de seguridad en un entorno multiusuario; auditor&iacute;as y actualizaci&oacute;n de protocolos.</span>
+              <span class="i18n-en"><b>Active Directory</b> administration and security policy in a multi-user environment; audits and protocol updates.</span>
+            </li>
+            <li>
+              <span class="i18n-es">Despliegue de <b>Zammad</b> como helpdesk, mejorando la resoluci&oacute;n de incidencias un 25%.</span>
+              <span class="i18n-en">Deployed <b>Zammad</b> as the helpdesk, improving incident resolution by 25%.</span>
+            </li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="entry">
+        <div class="when">
+          <span>2025</span>
+          <small><span class="i18n-es">Zamora &middot; Remoto</span><span class="i18n-en">Zamora &middot; Remote</span></small>
+        </div>
+        <div>
+          <h3><span class="i18n-es">BECARIO EN DESARROLLO FULL-STACK</span><span class="i18n-en">FULL-STACK DEVELOPMENT INTERN</span></h3>
+          <div class="org">MAINLY LABS</div>
+          <ul class="obj">
+            <li>
+              <span class="i18n-es">Refactoric&eacute; c&oacute;digo Python y desarroll&eacute; <b>APIs RESTful</b>, mejorando la modularidad un 30% e integrando <b>Node-RED</b> para aplicaciones IoT.</span>
+              <span class="i18n-en">Refactored Python code and built <b>RESTful APIs</b>, improving modularity by 30% and enabling <b>Node-RED</b> integration for IoT applications.</span>
+            </li>
+            <li>
+              <span class="i18n-es">Dise&ntilde;&eacute; interfaces de escritorio (Python/Tkinter) y web, incluida una <b>PWA</b> con funcionalidad offline que redujo los tiempos de carga un 25%.</span>
+              <span class="i18n-en">Designed desktop (Python/Tkinter) and web interfaces, including an offline-capable <b>PWA</b> that cut load times by 25%.</span>
+            </li>
+            <li>
+              <span class="i18n-es">Documentaci&oacute;n t&eacute;cnica y tutoriales interactivos, con 50+ pruebas unitarias hasta un 95% de cobertura.</span>
+              <span class="i18n-en">Technical documentation and interactive tutorials, with 50+ unit tests reaching 95% coverage.</span>
+            </li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="entry">
+        <div class="when">
+          <span>OCT 2021 &#9656; NOV 2024</span>
+          <small><span class="i18n-es">Cabanes &middot; H&iacute;brido</span><span class="i18n-en">Cabanes &middot; Hybrid</span></small>
+        </div>
+        <div>
+          <h3><span class="i18n-es">T&Eacute;CNICO IT / ANALISTA DE DATOS</span><span class="i18n-en">IT TECHNICIAN / DATA ANALYST</span></h3>
+          <div class="org">EUROPALETS GROUP</div>
+          <ul class="obj">
+            <li>
+              <span class="i18n-es">Migr&eacute; bases de datos de <b>Odoo</b> a <b>R2Docuo</b> con 20+ automatizaciones e integraciones, reduciendo el tiempo de proceso un 40%.</span>
+              <span class="i18n-en">Migrated <b>Odoo</b> databases to <b>R2Docuo</b> with 20+ automations and integrations, cutting workflow processing time by 40%.</span>
+            </li>
+            <li>
+              <span class="i18n-es">Optimic&eacute; bases de datos SQL, mejorando el rendimiento de consultas un 35% con acceso seguro y de alta disponibilidad.</span>
+              <span class="i18n-en">Optimized SQL databases, improving query performance by 35% with secure, high-availability access.</span>
+            </li>
+            <li>
+              <span class="i18n-es">Desarroll&eacute; asistentes virtuales en Python que agilizaron compras y ventas un 25%, y scraping con <b>Selenium</b> y Octoparse.</span>
+              <span class="i18n-en">Built Python virtual assistants that sped purchase and sale processes by 25%, plus scraping with <b>Selenium</b> and Octoparse.</span>
+            </li>
+            <li>
+              <span class="i18n-es">An&aacute;lisis de rendimiento con <b>Looker Studio</b>: 50+ informes estrat&eacute;gicos para decisiones de direcci&oacute;n.</span>
+              <span class="i18n-en">Performance analysis with <b>Looker Studio</b>: 50+ strategic reports supporting management decisions.</span>
+            </li>
+            <li>
+              <span class="i18n-es">Soporte remoto v&iacute;a AnyDesk resolviendo el 95% de 20+ incidencias mensuales.</span>
+              <span class="i18n-en">Remote support via AnyDesk, resolving 95% of 20+ monthly incidents.</span>
+            </li>
+          </ul>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-inv">
+    <div class="sect-head">
+      <h2 id="h-inv"><span class="i18n-es">INVENTARIO</span><span class="i18n-en">INVENTORY</span></h2>
+      <span class="rule"></span>
+    </div>
+    <div class="inv">
+      <div class="slot">
+        <h3>BACKEND</h3>
+        <div class="chips">
+          <span class="chip">C#</span><span class="chip">ASP.NET CORE</span><span class="chip">BLAZOR</span>
+          <span class="chip">.NET MAUI</span><span class="chip">EF CORE</span><span class="chip">PYTHON</span>
+          <span class="chip">FASTAPI</span><span class="chip">DJANGO</span><span class="chip">FLASK</span><span class="chip">PHP</span>
+        </div>
+      </div>
+      <div class="slot">
+        <h3>FRONTEND</h3>
+        <div class="chips">
+          <span class="chip">JAVASCRIPT</span><span class="chip">TYPESCRIPT</span><span class="chip">REACT</span>
+          <span class="chip">REDUX</span><span class="chip">VITE</span><span class="chip">TAILWIND</span>
+          <span class="chip">HTML</span><span class="chip">CSS</span><span class="chip">NODE</span>
+        </div>
+      </div>
+      <div class="slot">
+        <h3><span class="i18n-es">DATOS &amp; IA</span><span class="i18n-en">DATA &amp; AI</span></h3>
+        <div class="chips">
+          <span class="chip">MYSQL</span><span class="chip">POSTGRESQL</span><span class="chip">SQLITE</span>
+          <span class="chip">MONGODB</span><span class="chip">PANDAS</span><span class="chip">NUMPY</span>
+          <span class="chip">SELENIUM</span><span class="chip">TENSORFLOW</span><span class="chip">PYTORCH</span>
+          <span class="chip">LOOKER STUDIO</span>
+        </div>
+      </div>
+      <div class="slot">
+        <h3><span class="i18n-es">SISTEMAS</span><span class="i18n-en">OPS &amp; TOOLS</span></h3>
+        <div class="chips">
+          <span class="chip">LINUX</span><span class="chip">SYSTEMD</span><span class="chip">DOCKER</span>
+          <span class="chip">NGINX</span><span class="chip">GIT</span><span class="chip">ACTIVE DIRECTORY</span>
+          <span class="chip">ZAMMAD</span><span class="chip">NODE-RED</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-achv">
+    <div class="sect-head">
+      <h2 id="h-achv"><span class="i18n-es">LOGROS</span><span class="i18n-en">ACHIEVEMENTS</span></h2>
+      <span class="rule"></span>
+      <span class="count">7 / 7</span>
+    </div>
+    <div class="achv">
+      <div class="badge deg">
+        <span class="star">&#9670;</span>
+        <span>
+          <span class="t i18n-es">MATEM&Aacute;TICA COMPUTACIONAL</span><span class="t i18n-en">COMPUTATIONAL MATHEMATICS</span>
+          <span class="s">Universitat Jaume I &middot; 2018</span>
+        </span>
+      </div>
+      <div class="badge">
+        <span class="star">&#9733;</span>
+        <span><span class="t">PYTHON PCAP</span><span class="s">Escuela MUSK &middot; 2024</span></span>
+      </div>
+      <div class="badge">
+        <span class="star">&#9733;</span>
+        <span><span class="t">BUILDING AI</span><span class="s">University of Helsinki &middot; 2024</span></span>
+      </div>
+      <div class="badge">
+        <span class="star">&#9733;</span>
+        <span><span class="t">FRONT END DEVELOPMENT LIBRARIES</span><span class="s">freeCodeCamp &middot; 2025</span></span>
+      </div>
+      <div class="badge">
+        <span class="star">&#9733;</span>
+        <span><span class="t">JS ALGORITHMS &amp; DATA STRUCTURES</span><span class="s">freeCodeCamp &middot; 2025</span></span>
+      </div>
+      <div class="badge">
+        <span class="star">&#9733;</span>
+        <span><span class="t">RESPONSIVE WEB DESIGN</span><span class="s">freeCodeCamp &middot; 2025</span></span>
+      </div>
+      <div class="badge">
+        <span class="star">&#9733;</span>
+        <span><span class="t">DATA VISUALIZATION</span><span class="s">freeCodeCamp &middot; 2025</span></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-lang">
+    <div class="sect-head">
+      <h2 id="h-lang"><span class="i18n-es">IDIOMAS</span><span class="i18n-en">LANGUAGES</span></h2>
+      <span class="rule"></span>
+    </div>
+    <div class="stats">
+      <div>
+        <div class="stat-top"><span><span class="i18n-es">CASTELLANO</span><span class="i18n-en">SPANISH</span></span><span class="val"><span class="i18n-es">NATIVO</span><span class="i18n-en">NATIVE</span></span></div>
+        <div class="bar lime"><i style="width:100%"></i></div>
+      </div>
+      <div>
+        <div class="stat-top"><span>CATAL&Agrave;</span><span class="val"><span class="i18n-es">NATIU</span><span class="i18n-en">NATIVE</span></span></div>
+        <div class="bar lime"><i style="width:100%"></i></div>
+      </div>
+      <div>
+        <div class="stat-top"><span>ENGLISH</span><span class="val">B2 &middot; CERTACLES</span></div>
+        <div class="bar cyan"><i style="width:75%"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-contact">
+    <div class="sect-head">
+      <h2 id="h-contact"><span class="i18n-es">CONTACTO</span><span class="i18n-en">CONTACT</span></h2>
+      <span class="rule"></span>
+    </div>
+    <ul class="contact-list">
+      <li><a href="mailto:victorsolerpauner@gmail.com"><span class="k">EMAIL</span> victorsolerpauner@gmail.com</a></li>
+      <li><a href="https://www.linkedin.com/in/victor-sp9" target="_blank" rel="noopener"><span class="k">LINKEDIN</span> in/victor-sp9</a></li>
+      <li><a href="https://github.com/Kurama71V" target="_blank" rel="noopener"><span class="k">GITHUB</span> @Kurama71V</a></li>
+    </ul>
+  </section>
+
+  <footer>
+    <div><span class="i18n-es">HECHO A MANO EN CASTELL&Oacute;N &middot; SIN FRAMEWORKS</span><span class="i18n-en">HAND-BUILT IN CASTELL&Oacute;N &middot; NO FRAMEWORKS</span></div>
+    <div class="konami" id="hint">&#8593;&#8593;&#8595;&#8595;&#8592;&#8594;&#8592;&#8594;BA</div>
+  </footer>
+
+</main>
+
+<div class="battle" id="battle" role="dialog" aria-modal="true" aria-label="Encuentro">
+  <div class="screen">
+    <div class="screen-top">
+      <span id="encTitle">&#9733; ENCUENTRO ALEATORIO</span>
+      <button class="screen-x" id="btnClose" type="button">ESC &#10005;</button>
+    </div>
+
+    <canvas id="field" width="208" height="112" aria-hidden="true"></canvas>
+
+    <div class="foe-line">
+      <span class="nm" id="foeName">&nbsp;</span>
+      <span class="bar lime"><i id="foeHp" style="width:100%"></i></span>
+    </div>
+
+    <div class="battle-log" id="blog"></div>
+
+    <div class="cmd-wrap">
+      <div class="cmds">
+        <button class="cmd" type="button" data-act="atk"><span class="i18n-es">ATACAR</span><span class="i18n-en">ATTACK</span></button>
+        <button class="cmd" type="button" data-act="mag"><span class="i18n-es">MAGIA</span><span class="i18n-en">MAGIC</span></button>
+        <button class="cmd" type="button" data-act="item"><span class="i18n-es">OBJETO</span><span class="i18n-en">ITEM</span></button>
+        <button class="cmd" type="button" data-act="flee"><span class="i18n-es">HUIR</span><span class="i18n-en">FLEE</span></button>
+      </div>
+      <div class="party">
+        <div class="row"><span>VICTOR</span><span class="num">LV.04</span></div>
+        <div class="row"><span>HP</span><span class="num" id="meHpNum">240/240</span></div>
+        <div class="bar lime"><i id="meHp" style="width:100%"></i></div>
+        <div class="row"><span>MP</span><span class="num" id="meMpNum">40/40</span></div>
+        <div class="bar cyan"><i id="meMp" style="width:100%"></i></div>
+        <div class="row"><span>ATB</span><span class="num" id="potNum">x3</span></div>
+        <div class="bar gold"><i id="meAtb" style="width:0%"></i></div>
+      </div>
+    </div>
+
+    <button class="again" id="btnAgain" type="button" hidden></button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var root = document.documentElement;
+  function ES(){ return root.lang !== "en"; }
+  function pick(o){ return ES() ? o.es : o.en; }
+
+  /* ---------------- language ---------------- */
+  function setLang(l){
+    l = (l === "en") ? "en" : "es";
+    root.setAttribute("data-lang", l);
+    root.lang = l;
+    var btns = document.querySelectorAll("[data-set-lang]");
+    for (var i = 0; i < btns.length; i++){
+      btns[i].setAttribute("aria-pressed", btns[i].getAttribute("data-set-lang") === l ? "true" : "false");
+    }
+    try { localStorage.setItem("vsp-lang", l); } catch(e){}
+    if (B) { renderLog(); renderFoe(); renderAgain(); }
+  }
+  document.addEventListener("click", function(ev){
+    var b = (ev.target && ev.target.closest) ? ev.target.closest("[data-set-lang]") : null;
+    if (b) setLang(b.getAttribute("data-set-lang"));
+  });
+
+  /* ---------------- pixel drawing ---------------- */
+  function drawSprite(ctx, rows, pal, ox, oy, cell){
+    for (var r = 0; r < rows.length; r++){
+      for (var c = 0; c < rows[r].length; c++){
+        var ch = rows[r].charAt(c);
+        if (pal[ch]){
+          ctx.fillStyle = pal[ch];
+          ctx.fillRect(ox + c * cell, oy + r * cell, cell, cell);
+        }
+      }
+    }
+  }
+
+  /* ---------------- avatar ---------------- */
+  var AVATAR = [
+    "....5555....","...511115...","..51111115..",".531111135..",
+    ".532222235..",".532622635..",".532222235..","..52222257..",
+    "...52225....","...54445....","..544444445.",".5444444445."
+  ];
+  var AVATAR_PAL = {"1":"#2b2438","2":"#f0b98c","3":"#ff4d8d","4":"#5bd1ff","5":"#0d0b16","6":"#0d0b16","7":"#ffc23d"};
+  var av = document.getElementById("sprite");
+  if (av && av.getContext) drawSprite(av.getContext("2d"), AVATAR, AVATAR_PAL, 0, 0, 4);
+
+  /* ---------------- bestiary ---------------- */
+  var BESTIARY = [
+    {
+      name:{es:"CACTOIDE", en:"CACTOID"},
+      hp:110, spd:0.42, evade:0.35, exp:180,
+      drop:{es:"AGUJA DORADA", en:"GOLD NEEDLE"},
+      moves:[
+        {n:{es:"LLUVIA DE AGUJAS", en:"NEEDLE RAIN"}, min:20, max:20},
+        {n:{es:"SALTO", en:"HOP"}, min:10, max:22}
+      ],
+      pal:{"d":"#2f7a4d","g":"#7ef29d","k":"#0d0b16"},
+      rows:[
+        "....ddd.....","....dgd.....","dd..dgd..dd.","dgd.dgd.dgd.",
+        "dgd.dgd.dgd.","dgdddgdddgd.",".dgggggggd..","..dgkgkgd...",
+        "..dggggggd..","..dgkkkgd...","..dgggggd...","...ddddd...."
+      ]
+    },
+    {
+      name:{es:"VELADOR", en:"LANTERNLING"},
+      hp:190, spd:0.26, evade:0.05, exp:320,
+      drop:{es:"CUCHILLO MELLADO", en:"CHIPPED KNIFE"},
+      moves:[
+        {n:{es:"RENCOR", en:"GRUDGE"}, min:44, max:72},
+        {n:{es:"CUCHILLADA", en:"STAB"}, min:26, max:40}
+      ],
+      pal:{"h":"#3b6e4a","k":"#0d0b16","y":"#ffc23d","w":"#f2e9dc","r":"#ff4d8d"},
+      rows:[
+        "....kkkk....","...khhhhk...","..khhhhhhk..",".khhhhhhhhk.",
+        ".khrhhhhrhk.",".khhhhhhhhk.","ykhhhhhhhhkw","ykhhhhhhhhkw",
+        "ykhhhhhhhhkw",".khhhhhhhhk.",".kkhhhhhhkk.","..kkkkkkkk.."
+      ]
+    },
+    {
+      name:{es:"NULL REFERENCE", en:"NULL REFERENCE"},
+      hp:140, spd:0.5, evade:0.12, exp:240,
+      drop:{es:"TRAZA DE PILA", en:"STACK TRACE"},
+      moves:[
+        {n:{es:"DESBORDAMIENTO", en:"STACK OVERFLOW"}, min:18, max:30},
+        {n:{es:"EXCEPCIÓN", en:"UNHANDLED THROW"}, min:12, max:26}
+      ],
+      pal:{"b":"#ff4d8d","k":"#0d0b16","c":"#5bd1ff"},
+      rows:[
+        "c..c....c..c",".c.c....c.c.","..kkkkkkkk..",".kbbbbbbbbk.",
+        "kbbcbbbbcbbk","kbbbbbbbbbbk","kbkkbbbbkkbk","kbbbbbbbbbbk",
+        ".kbbbbbbbbk.","..kkkkkkkk..",".c..c..c..c.","c...c..c...c"
+      ]
+    }
+  ];
+
+  /* ---------------- battle state ---------------- */
+  var elBattle = document.getElementById("battle");
+  var elField  = document.getElementById("field");
+  var elFoeNm  = document.getElementById("foeName");
+  var elFoeHp  = document.getElementById("foeHp");
+  var elLog    = document.getElementById("blog");
+  var elMeHp   = document.getElementById("meHp");
+  var elMeMp   = document.getElementById("meMp");
+  var elMeAtb  = document.getElementById("meAtb");
+  var elHpNum  = document.getElementById("meHpNum");
+  var elMpNum  = document.getElementById("meMpNum");
+  var elPot    = document.getElementById("potNum");
+  var elAgain  = document.getElementById("btnAgain");
+  var elClose  = document.getElementById("btnClose");
+  var cmds     = document.querySelectorAll("[data-act]");
+  var fx       = (elField && elField.getContext) ? elField.getContext("2d") : null;
+
+  var reduce = false;
+  try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e){}
+
+  var B = null, raf = null, last = 0;
+
+  function rnd(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+
+  function newBattle(){
+    var f = BESTIARY[Math.floor(Math.random() * BESTIARY.length)];
+    B = {
+      foe:{ def:f, hp:f.hp, max:f.hp, atb:0 },
+      me:{ hp:240, max:240, mp:40, mpMax:40, atb:0, spd:0.58, pots:3 },
+      over:null, pops:[], shake:0, flashFoe:0, lines:[]
+    };
+    say({es:"¡Un " + f.name.es + " salvaje aparece!", en:"A wild " + f.name.en + " appears!"});
+    say({es:"Espera a que se llene la barra ATB.", en:"Wait for the ATB bar to fill."}, true);
+    renderFoe(); renderMe(); renderAgain();
+  }
+
+  function say(line, dim){
+    B.lines.push({txt:line, dim:!!dim});
+    if (B.lines.length > 2) B.lines.shift();
+    renderLog();
+  }
+
+  function renderLog(){
+    if (!elLog || !B) return;
+    elLog.textContent = "";
+    for (var i = 0; i < B.lines.length; i++){
+      var d = document.createElement("div");
+      d.textContent = pick(B.lines[i].txt);
+      if (B.lines[i].dim) d.className = "dim";
+      elLog.appendChild(d);
+    }
+  }
+
+  function renderFoe(){
+    if (!B) return;
+    if (elFoeNm) elFoeNm.textContent = pick(B.foe.def.name);
+    if (elFoeHp) elFoeHp.style.width = Math.max(0, B.foe.hp / B.foe.max * 100) + "%";
+  }
+
+  function renderMe(){
+    if (!B) return;
+    var m = B.me;
+    if (elMeHp)  elMeHp.style.width  = Math.max(0, m.hp / m.max * 100) + "%";
+    if (elMeMp)  elMeMp.style.width  = Math.max(0, m.mp / m.mpMax * 100) + "%";
+    if (elMeAtb) elMeAtb.style.width = Math.min(100, m.atb * 100) + "%";
+    if (elHpNum) elHpNum.textContent = Math.max(0, m.hp) + "/" + m.max;
+    if (elMpNum) elMpNum.textContent = m.mp + "/" + m.mpMax;
+    if (elPot)   elPot.textContent   = "x" + m.pots;
+
+    var ready = !B.over && m.atb >= 1;
+    for (var i = 0; i < cmds.length; i++){
+      var a = cmds[i].getAttribute("data-act");
+      cmds[i].disabled = (a === "flee") ? !!B.over : !ready;
+    }
+  }
+
+  function renderAgain(){
+    if (!elAgain) return;
+    if (!B || !B.over){ elAgain.hidden = true; return; }
+    elAgain.hidden = false;
+    elAgain.textContent = ES() ? "OTRO ENCUENTRO" : "ANOTHER ENCOUNTER";
+  }
+
+  function pop(txt, color, x, y){
+    B.pops.push({txt:txt, c:color, x:x, y:y, t:0});
+  }
+
+  /* ---------------- actions ---------------- */
+  function hitFoe(dmg, label){
+    if (Math.random() < B.foe.def.evade){
+      pop(ES() ? "FALLA" : "MISS", "#a79ec4", 150, 46);
+      say({es:"El " + B.foe.def.name.es + " esquiva.", en:"The " + B.foe.def.name.en + " dodges."});
+      return;
+    }
+    B.foe.hp -= dmg;
+    B.flashFoe = reduce ? 0 : 0.25;
+    pop("-" + dmg, "#ffc23d", 150, 46);
+    say(label);
+    if (B.foe.hp <= 0){
+      B.foe.hp = 0;
+      B.over = "win";
+      say({
+        es:"¡VICTORIA! " + B.foe.def.exp + " EXP · obtienes " + B.foe.def.drop.es + ".",
+        en:"VICTORY! " + B.foe.def.exp + " EXP · you get " + B.foe.def.drop.en + "."
+      });
+      renderAgain();
+    }
+    renderFoe();
+  }
+
+  function act(kind){
+    if (!B) return;
+    if (kind === "flee"){ closeBattle(); return; }
+    if (B.over || B.me.atb < 1) return;
+
+    if (kind === "atk"){
+      B.me.atb = 0;
+      var d = rnd(20, 36);
+      hitFoe(d, {es:"Victor ataca.", en:"Victor attacks."});
+    } else if (kind === "mag"){
+      if (B.me.mp < 8){
+        say({es:"No te queda MP suficiente.", en:"Not enough MP."}, true);
+        return;
+      }
+      B.me.atb = 0; B.me.mp -= 8;
+      var f = rnd(34, 58);
+      hitFoe(f, {es:"Victor lanza PIRO.", en:"Victor casts FIRE."});
+    } else if (kind === "item"){
+      if (B.me.pots < 1){
+        say({es:"No te quedan pociones.", en:"No potions left."}, true);
+        return;
+      }
+      B.me.atb = 0; B.me.pots--;
+      var heal = Math.min(70, B.me.max - B.me.hp);
+      B.me.hp += heal;
+      pop("+" + heal, "#7ef29d", 52, 84);
+      say({es:"Victor usa una poción.", en:"Victor uses a potion."});
+    }
+    renderMe();
+  }
+
+  function foeTurn(){
+    var mv = B.foe.def.moves[Math.floor(Math.random() * B.foe.def.moves.length)];
+    var d = rnd(mv.min, mv.max);
+    B.me.hp -= d;
+    B.shake = reduce ? 0 : 0.3;
+    pop("-" + d, "#ff4d8d", 52, 84);
+    say({
+      es:"El " + B.foe.def.name.es + " usa " + mv.n.es + ".",
+      en:"The " + B.foe.def.name.en + " uses " + mv.n.en + "."
+    });
+    if (B.me.hp <= 0){
+      B.me.hp = 0;
+      B.over = "lose";
+      say({es:"Victor cae. FIN DE LA PARTIDA.", en:"Victor falls. GAME OVER."});
+      renderAgain();
+    }
+    renderMe();
+  }
+
+  /* ---------------- loop ---------------- */
+  function frame(now){
+    if (!B){ raf = null; return; }
+    var dt = Math.min(0.05, (now - last) / 1000 || 0);
+    last = now;
+
+    if (!B.over){
+      if (B.me.atb < 1) B.me.atb = Math.min(1, B.me.atb + B.me.spd * dt);
+      B.foe.atb += B.foe.def.spd * dt;
+      if (B.foe.atb >= 1){ B.foe.atb = 0; foeTurn(); }
+      renderMe();
+    }
+
+    if (B.shake > 0)    B.shake    = Math.max(0, B.shake - dt);
+    if (B.flashFoe > 0) B.flashFoe = Math.max(0, B.flashFoe - dt);
+    for (var i = B.pops.length - 1; i >= 0; i--){
+      B.pops[i].t += dt;
+      if (B.pops[i].t > 1.1) B.pops.splice(i, 1);
+    }
+
+    paint();
+    raf = requestAnimationFrame(frame);
+  }
+
+  function paint(){
+    if (!fx || !B) return;
+    var W = elField.width, H = elField.height;
+
+    fx.setTransform(1, 0, 0, 1, 0, 0);
+    fx.fillStyle = "#150f28";
+    fx.fillRect(0, 0, W, H);
+
+    if (B.shake > 0){
+      fx.setTransform(1, 0, 0, 1, Math.round((Math.random() - .5) * 6), 0);
+    }
+
+    /* ground */
+    fx.fillStyle = "#211a3d";
+    fx.fillRect(0, 74, W, H - 74);
+    fx.fillStyle = "#2c2352";
+    fx.fillRect(0, 74, W, 2);
+    for (var s = 0; s < 40; s++){
+      fx.fillStyle = (s % 3 === 0) ? "#2c2352" : "#1b1435";
+      fx.fillRect((s * 17) % W, 80 + (s * 7) % 26, 3, 2);
+    }
+
+    /* stars */
+    fx.fillStyle = "#3b3268";
+    for (var t = 0; t < 22; t++){
+      fx.fillRect((t * 29) % W, (t * 13) % 66, 1, 1);
+    }
+
+    /* foe */
+    if (B.foe.hp > 0){
+      var pal = B.foe.def.pal;
+      if (B.flashFoe > 0){
+        var w = {}; for (var k in pal) if (pal.hasOwnProperty(k)) w[k] = "#f2e9dc";
+        pal = w;
+      }
+      drawSprite(fx, B.foe.def.rows, pal, 126, 16, 5);
+    }
+
+    /* hero (back view) */
+    drawSprite(fx, AVATAR, AVATAR_PAL, 26, 52, 4);
+
+    /* damage numbers */
+    fx.textAlign = "center";
+    fx.font = '9px "Silkscreen", monospace';
+    for (var p = 0; p < B.pops.length; p++){
+      var o = B.pops[p];
+      fx.globalAlpha = Math.max(0, 1 - o.t / 1.1);
+      fx.fillStyle = o.c;
+      fx.fillText(o.txt, o.x, o.y - o.t * 22);
+    }
+    fx.globalAlpha = 1;
+
+    if (B.over){
+      fx.setTransform(1, 0, 0, 1, 0, 0);
+      fx.fillStyle = "rgba(13,11,22,.78)";
+      fx.fillRect(0, 0, W, H);
+      fx.font = '12px "Silkscreen", monospace';
+      fx.textAlign = "center";
+      fx.fillStyle = (B.over === "win") ? "#ffc23d" : "#ff4d8d";
+      var msg = (B.over === "win")
+        ? (ES() ? "¡VICTORIA!" : "VICTORY!")
+        : (ES() ? "FIN DE LA PARTIDA" : "GAME OVER");
+      fx.fillText(msg, W / 2, H / 2 + 4);
+    }
+    fx.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  /* ---------------- open / close ---------------- */
+  function openBattle(){
+    if (!elBattle) return;
+    dismissHand();
+    elBattle.classList.add("is-open");
+    elBattle.removeAttribute("hidden");
+    newBattle();
+    last = performance.now();
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(frame);
+    if (elClose) elClose.focus();
+  }
+
+  function closeBattle(){
+    if (!elBattle) return;
+    elBattle.classList.remove("is-open");
+    elBattle.setAttribute("hidden", "");
+    if (raf){ cancelAnimationFrame(raf); raf = null; }
+    B = null;
+  }
+
+  closeBattle();
+
+  if (elClose) elClose.addEventListener("click", closeBattle);
+  if (elBattle) elBattle.addEventListener("click", function(e){ if (e.target === elBattle) closeBattle(); });
+  if (elAgain) elAgain.addEventListener("click", function(){
+    newBattle();
+    last = performance.now();
+    if (!raf) raf = requestAnimationFrame(frame);
+  });
+
+  for (var ci = 0; ci < cmds.length; ci++){
+    (function(btn){
+      btn.addEventListener("click", function(){ act(btn.getAttribute("data-act")); });
+    })(cmds[ci]);
+  }
+
+  /* ---------------- triggers ---------------- */
+  var CODE = ["arrowup","arrowup","arrowdown","arrowdown","arrowleft","arrowright","arrowleft","arrowright","b","a"];
+  var pos = 0;
+
+  /* one-off pointing hand: shown until the badge is pressed once, then never again */
+  var HAND = [
+    "......kkkkk.",
+    ".....ksssssk",
+    "..kkkksssssk",
+    ".ksssssssssk",
+    "..kkkksssssk",
+    ".....ksssssk",
+    ".....kccccck",
+    ".....kccccck",
+    "......kkkkk."
+  ];
+  var HAND_PAL = {"k":"#0d0b16","s":"#f0b98c","c":"#ff4d8d"};
+  var hand = document.getElementById("handHint");
+  if (hand && hand.getContext){
+    drawSprite(hand.getContext("2d"), HAND, HAND_PAL, 0, 0, 3);
+    var hinted = false;
+    try { hinted = localStorage.getItem("vsp-hinted") === "1"; } catch(e){}
+    if (!hinted) hand.classList.add("show");
+  }
+  function dismissHand(){
+    if (hand) hand.classList.remove("show");
+    try { localStorage.setItem("vsp-hinted", "1"); } catch(e){}
+  }
+
+  var lv = document.getElementById("lvBadge");
+  if (lv){
+    lv.addEventListener("click", function(){
+      dismissHand();
+      openBattle();
+    });
+  }
+
+  document.addEventListener("keydown", function(e){
+    var open = elBattle && elBattle.classList.contains("is-open");
+    if (open){
+      if (e.key === "Escape"){ e.preventDefault(); closeBattle(); }
+      return;
+    }
+    var k = (e.key.length === 1) ? e.key.toLowerCase() : e.key.toLowerCase();
+    if (k === CODE[pos]){
+      pos++;
+      if (pos === CODE.length){ pos = 0; openBattle(); }
+    } else {
+      pos = (k === CODE[0]) ? 1 : 0;
+    }
+  });
+
+  setLang(root.getAttribute("data-lang"));
+})();
+</script>
