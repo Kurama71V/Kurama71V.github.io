@@ -5,6 +5,23 @@
 <meta name="description" content="Victor Soler Pauner · Desarrollador backend / full stack (.NET, Blazor, Python). Castellón, España.">
 <meta name="theme-color" content="#0d0b16">
 <title>Victor Soler · Save File</title>
+<link rel="canonical" href="https://kurama71v.github.io/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<meta property="og:type" content="profile">
+<meta property="og:url" content="https://kurama71v.github.io/">
+<meta property="og:title" content="Victor Soler Pauner · Backend / Full Stack Developer">
+<meta property="og:description" content=".NET, Blazor, .NET MAUI y Python. Construyo software de gestión de punta a punta, desde la API hasta el servidor Linux.">
+<meta property="og:image" content="https://kurama71v.github.io/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Ficha pixel art de Victor Soler: backend / full stack developer en Castellón">
+<meta property="og:locale" content="es_ES">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="profile:first_name" content="Victor">
+<meta property="profile:last_name" content="Soler Pauner">
+<meta name="twitter:card" content="summary_large_image">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -185,7 +202,7 @@
   .menu{margin-top:22px; display:flex; flex-wrap:wrap; gap:12px;}
   .btn{
     font-family:var(--font-hud); font-size:var(--fs-xs); letter-spacing:.04em;
-    text-decoration:none; display:inline-block; padding:11px 16px;
+    text-decoration:none; display:inline-block; padding:11px 16px; cursor:pointer; line-height:inherit;
     background:var(--panel-hi); color:var(--ink);
     border:2px solid var(--line); box-shadow:4px 4px 0 rgba(0,0,0,.6);
     transition:transform .08s, box-shadow .08s, background-color .12s steps(2), color .12s steps(2), border-color .12s steps(2);
@@ -393,6 +410,68 @@
     .badge:hover{transform:none; box-shadow:none;}
   }
 
+  .print-only{display:none;}
+
+  /* ================= PRINT: a plain, light CV ================= */
+  @media print{
+    @page{margin:14mm 15mm;}
+    :root{
+      --void:#fff; --panel:#fff; --panel-hi:#fff;
+      --line:#cfcfd6; --line-hi:#9a9aa6;
+      --ink:#16141f; --ink-dim:#55536a;
+      --magenta:#b0124f; --cyan:#0a6a94; --gold:#8a5a00; --lime:#1d7a3c;
+      --font-body:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+      --font-hud:var(--font-body);
+      color-scheme:light;
+    }
+    *{animation:none !important; transition:none !important; box-shadow:none !important; text-shadow:none !important;}
+    html,body{background:#fff !important; font-size:10pt; line-height:1.4;}
+
+    /* contact details move into the hero's .print-only line */
+    .crt,.vignette,.hud,.battle,.menu,.hand,footer,.tag.live::before,.panel:has(.contact-list){display:none !important;}
+    .stats,.achv{grid-template-columns:repeat(3,1fr); gap:10px 18px;}
+    .print-only{display:inline;}
+
+    .wrap{max-width:none; padding:0; gap:16px;}
+    .panel,.quest{border:0; padding:0; background:none;}
+    .quest-bar{padding:0 0 4px; background:none; border-bottom:1px solid var(--line);}
+    .quest-body{padding:6px 0 0;}
+    .quests{gap:14px;}
+
+    h1,.sect-head h2{font-family:"Silkscreen","Courier New",monospace;}
+    .hero{gap:16px;}
+    .hero h1{font-size:20pt;}
+    .sprite-box{border-width:2px; padding:4px;}
+    #sprite{width:72px; height:72px;}
+    .meta{font-size:9.5pt;}
+    .sect-head{margin-bottom:8px; break-after:avoid;}
+    .sect-head h2{font-size:11pt;}
+    .sect-head .rule{height:1px; background:var(--line);}
+    .quest-bar h3,.entry h3{font-size:10.5pt;}
+    .tag,.chip,.when,.when small,.entry .org,.stat-top,.xp-top,.slot h3,.badge .t{font-size:8pt;}
+    .stat-note,.badge .s,.note{font-size:8.5pt;}
+
+    .bar{height:7px; padding:0; border-width:1px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .bar i{background-image:none;}
+    .wrap .bar i{transform:none;}
+
+    .obj{gap:3px;}
+    .obj li{padding-left:14px;}
+    .obj li::before{font-size:8pt; left:0;}
+    .obj b{background:none; font-weight:600; padding:0;}
+    .chips{gap:4px; margin-top:8px;}
+    .chip{border-width:1px; padding:1px 5px; color:var(--ink);}
+    .tag{border-width:1px; background:none !important;}
+
+    .entry{grid-template-columns:120px 1fr; padding-block:10px; border-top-width:1px;}
+    .badge{border-width:1px; padding:6px 8px;}
+    .contact-list{gap:4px;}
+    .contact-list a::before{display:none;}
+    a{color:var(--ink) !important;}
+
+    .entry,.badge,.slot,.stats > div,.obj li,.quest-bar{break-inside:avoid;}
+  }
+
   @media (prefers-reduced-motion:reduce){
     *{animation:none !important; transition:none !important;}
     .crt{display:none;}
@@ -401,8 +480,13 @@
 
 <script>
   (function(){
-    var l = "es";
-    try { l = localStorage.getItem("vsp-lang") || "es"; } catch(e){}
+    /* saved choice wins; otherwise Spanish for es/ca browsers, English for the rest */
+    var l = null;
+    try { l = localStorage.getItem("vsp-lang"); } catch(e){}
+    if (!l){
+      var prefs = navigator.languages || [navigator.language || "es"];
+      l = /^(es|ca)\b/i.test(prefs[0] || "") ? "es" : "en";
+    }
     l = (l === "en") ? "en" : "es";
     document.documentElement.setAttribute("data-lang", l);
     document.documentElement.lang = l;
@@ -428,7 +512,7 @@
 
 <main class="wrap">
 
-  <section class="panel hero" aria-label="Perfil">
+  <section class="panel hero" aria-label="Perfil" data-aria-es="Perfil" data-aria-en="Profile">
     <div class="sprite-box">
       <canvas id="sprite" width="48" height="48" aria-hidden="true"></canvas>
     </div>
@@ -444,6 +528,9 @@
         <span class="i18n-en">BSc Computational Mathematics</span>
         <span class="i18n-es">Disponible para remoto</span>
         <span class="i18n-en">Open to remote</span>
+        <span class="print-only">victorsolerpauner@gmail.com</span>
+        <span class="print-only">linkedin.com/in/victor-sp9</span>
+        <span class="print-only">kurama71v.github.io</span>
       </div>
       <p class="tagline">
         <span class="i18n-es">Construyo software de gesti&oacute;n de punta a punta: APIs en .NET, front en Blazor, apps m&oacute;viles y los servidores Linux donde corre todo. Ahora mismo, el portal de comisiones de un grupo de distribuci&oacute;n y telecomunicaciones &mdash; y un producto de control horario que ya licenciamos a terceros.</span>
@@ -458,12 +545,15 @@
         <div class="bar gold"><i id="xpBar" style="width:82%"></i></div>
       </div>
 
-      <nav class="menu" aria-label="Enlaces">
+      <nav class="menu" aria-label="Enlaces" data-aria-es="Enlaces" data-aria-en="Links">
         <a class="btn primary" href="https://www.linkedin.com/in/victor-sp9" target="_blank" rel="noopener">LINKEDIN</a>
         <a class="btn" href="https://github.com/Kurama71V" target="_blank" rel="noopener">GITHUB</a>
         <a class="btn" href="mailto:victorsolerpauner@gmail.com">
           <span class="i18n-es">ESCR&Iacute;BEME</span><span class="i18n-en">EMAIL ME</span>
         </a>
+        <button class="btn" type="button" id="btnPrint">
+          <span class="i18n-es">GUARDAR CV &middot; PDF</span><span class="i18n-en">SAVE CV &middot; PDF</span>
+        </button>
       </nav>
     </div>
   </section>
@@ -830,10 +920,10 @@
 
 </main>
 
-<div class="battle" id="battle" role="dialog" aria-modal="true" aria-label="Encuentro">
+<div class="battle" id="battle" role="dialog" aria-modal="true" aria-labelledby="encTitle">
   <div class="screen">
     <div class="screen-top">
-      <span id="encTitle">&#9733; ENCUENTRO ALEATORIO</span>
+      <span id="encTitle">&#9733; <span class="i18n-es">ENCUENTRO ALEATORIO</span><span class="i18n-en">RANDOM ENCOUNTER</span></span>
       <button class="screen-x" id="btnClose" type="button">ESC &#10005;</button>
     </div>
 
@@ -877,7 +967,7 @@
   function pick(o){ return ES() ? o.es : o.en; }
 
   /* ---------------- language ---------------- */
-  function setLang(l){
+  function setLang(l, remember){
     l = (l === "en") ? "en" : "es";
     root.setAttribute("data-lang", l);
     root.lang = l;
@@ -885,12 +975,17 @@
     for (var i = 0; i < btns.length; i++){
       btns[i].setAttribute("aria-pressed", btns[i].getAttribute("data-set-lang") === l ? "true" : "false");
     }
-    try { localStorage.setItem("vsp-lang", l); } catch(e){}
+    /* aria-labels can't use the .i18n-* spans, so they carry both strings */
+    var lbl = document.querySelectorAll("[data-aria-es]");
+    for (i = 0; i < lbl.length; i++){
+      lbl[i].setAttribute("aria-label", lbl[i].getAttribute("data-aria-" + l));
+    }
+    if (remember){ try { localStorage.setItem("vsp-lang", l); } catch(e){} }
     if (B) { renderLog(); renderFoe(); renderAgain(); }
   }
   document.addEventListener("click", function(ev){
     var b = (ev.target && ev.target.closest) ? ev.target.closest("[data-set-lang]") : null;
-    if (b) setLang(b.getAttribute("data-set-lang"));
+    if (b) setLang(b.getAttribute("data-set-lang"), true);
   });
 
   /* ---------------- level: one LV per full year since the first IT job ---------------- */
@@ -906,6 +1001,11 @@
     var tag = "LV." + (lv < 10 ? "0" : "") + lv;
     var els = document.querySelectorAll("[data-lv]");
     for (var i = 0; i < els.length; i++) els[i].textContent = tag;
+    var badge = document.getElementById("lvBadge");
+    if (badge){
+      badge.setAttribute("data-aria-es", tag + " · abrir minijuego");
+      badge.setAttribute("data-aria-en", tag + " · open mini-game");
+    }
     els = document.querySelectorAll("[data-xp-years]");
     for (i = 0; i < els.length; i++) els[i].textContent = lv;
     els = document.querySelectorAll("[data-xp-now]");
@@ -1238,11 +1338,22 @@
   }
 
   /* ---------------- open / close ---------------- */
+  /* while the dialog is open the page behind it is inert: Tab stays inside, screen readers skip it */
+  var backdrop = document.querySelectorAll("body > header, body > main");
+  var returnFocus = null;
+  function setInert(on){
+    for (var i = 0; i < backdrop.length; i++){
+      if (on) backdrop[i].setAttribute("inert", ""); else backdrop[i].removeAttribute("inert");
+    }
+  }
+
   function openBattle(){
     if (!elBattle) return;
+    if (!elBattle.classList.contains("is-open")) returnFocus = document.activeElement;
     dismissHand();
     elBattle.classList.add("is-open");
     elBattle.removeAttribute("hidden");
+    setInert(true);
     newBattle();
     last = performance.now();
     if (raf) cancelAnimationFrame(raf);
@@ -1254,8 +1365,11 @@
     if (!elBattle) return;
     elBattle.classList.remove("is-open");
     elBattle.setAttribute("hidden", "");
+    setInert(false);
     if (raf){ cancelAnimationFrame(raf); raf = null; }
     B = null;
+    if (returnFocus && returnFocus.focus) returnFocus.focus();
+    returnFocus = null;
   }
 
   closeBattle();
@@ -1302,6 +1416,9 @@
     if (hand) hand.classList.remove("show");
     try { localStorage.setItem("vsp-hinted", "1"); } catch(e){}
   }
+
+  var btnPrint = document.getElementById("btnPrint");
+  if (btnPrint) btnPrint.addEventListener("click", function(){ window.print(); });
 
   var lv = document.getElementById("lvBadge");
   if (lv){
