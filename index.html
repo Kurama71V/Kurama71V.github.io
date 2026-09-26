@@ -64,10 +64,7 @@
     margin:0;
     min-height:100vh;
     background:var(--void);
-    background-image:
-      radial-gradient(ellipse 80% 40% at 50% 0%, #241d45 0%, transparent 70%),
-      radial-gradient(circle at 1px 1px, rgba(91,209,255,.07) 1px, transparent 0);
-    background-size:auto, 24px 24px;
+    background-image:radial-gradient(ellipse 80% 40% at 50% 0%, #241d45 0%, transparent 70%);
     color:var(--ink);
     font-family:var(--font-body);
     font-size:21px;
@@ -196,8 +193,21 @@
   .bar.cyan i{background-color:var(--cyan);}
   .bar.gold i{background-color:var(--gold);}
   .bar.lime i{background-color:var(--lime);}
-  .wrap .bar i{transform-origin:left; animation:fill .9s steps(12) .15s both;}
+  .wrap .bar i{transform-origin:left;}
   @keyframes fill{from{transform:scaleX(0);}}
+
+  /* pixel starfield behind everything (drawn at 1/3 resolution, scaled up) */
+  #sky{position:fixed; top:0; left:0; z-index:-1; pointer-events:none; image-rendering:pixelated;}
+
+  /* reveal on scroll: .js-reveal is set in <head> only when motion is allowed,
+     .in is added by an IntersectionObserver; bars fill once their section shows */
+  .js-reveal main > section:not(.hero),
+  .js-reveal .quest{opacity:0; transform:translateY(16px);}
+  .js-reveal main > section.in,
+  .js-reveal .quest.in{opacity:1; transform:none; transition:opacity .45s steps(5), transform .45s steps(5);}
+  .hero .bar i,
+  .js-reveal .in .bar i{animation:fill .9s steps(12) calc(.15s + var(--i, 0) * 90ms) both;}
+  :root:not(.js-reveal) .wrap .bar i{animation:fill .9s steps(12) .15s both;}
 
   .menu{margin-top:22px; display:flex; flex-wrap:wrap; gap:12px;}
   .btn{
@@ -428,7 +438,8 @@
     html,body{background:#fff !important; font-size:10pt; line-height:1.4;}
 
     /* contact details move into the hero's .print-only line */
-    .crt,.vignette,.hud,.battle,.menu,.hand,footer,.tag.live::before,.panel:has(.contact-list){display:none !important;}
+    .crt,.vignette,#sky,.hud,.battle,.menu,.hand,footer,.tag.live::before,.panel:has(.contact-list){display:none !important;}
+    main > section,.quest{opacity:1 !important; transform:none !important;}
     .stats,.achv{grid-template-columns:repeat(3,1fr); gap:10px 18px;}
     .print-only{display:inline;}
 
@@ -453,7 +464,7 @@
 
     .bar{height:7px; padding:0; border-width:1px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
     .bar i{background-image:none;}
-    .wrap .bar i{transform:none;}
+    .wrap .bar i{transform:none !important;}
 
     .obj{gap:3px;}
     .obj li{padding-left:14px;}
@@ -490,9 +501,15 @@
     l = (l === "en") ? "en" : "es";
     document.documentElement.setAttribute("data-lang", l);
     document.documentElement.lang = l;
+
+    /* set before first paint so below-the-fold sections never flash in and out */
+    var still = false;
+    try { still = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e){}
+    if (!still && "IntersectionObserver" in window) document.documentElement.classList.add("js-reveal");
   })();
 </script>
 
+<canvas id="sky" aria-hidden="true"></canvas>
 <div class="crt" aria-hidden="true"></div>
 <div class="vignette" aria-hidden="true"></div>
 
@@ -1034,8 +1051,182 @@
     "...52225....","...54445....","..544444445.",".5444444445."
   ];
   var AVATAR_PAL = {"1":"#2b2438","2":"#f0b98c","3":"#ff4d8d","4":"#5bd1ff","5":"#0d0b16","6":"#0d0b16","7":"#ffc23d"};
-  var av = document.getElementById("sprite");
-  if (av && av.getContext) drawSprite(av.getContext("2d"), AVATAR, AVATAR_PAL, 0, 0, 4);
+  var still = false;
+  try { still = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e){}
+
+  /* ---------------- living avatar: breathe, blink, smile on hover ---------------- */
+  (function(){
+    var av = document.getElementById("sprite");
+    if (!av || !av.getContext) return;
+    var g = av.getContext("2d");
+    var PAL = {}; for (var k in AVATAR_PAL) PAL[k] = AVATAR_PAL[k];
+    PAL["8"] = "#b67c5c";   /* closed eyelid */
+    PAL["9"] = "#f28f9b";   /* blush */
+    var st = {inhale:false, blink:false, happy:false}, shown = "";
+
+    function put(rows, r, c, ch){ rows[r] = rows[r].substring(0, c) + ch + rows[r].substring(c + 1); }
+    function frame(){
+      var rows = AVATAR.slice();
+      if (st.inhale){                      /* shoulders rise one pixel */
+        rows[9]  = "..544444445.";
+        rows[10] = ".5444444445.";
+      }
+      if (st.blink && !st.happy){ put(rows, 5, 4, "8"); put(rows, 5, 7, "8"); }
+      if (st.happy){
+        put(rows, 6, 4, "9"); put(rows, 6, 7, "9");
+        put(rows, 7, 5, "6"); put(rows, 7, 6, "6");
+      }
+      var key = rows.join("");
+      if (key === shown) return;
+      shown = key;
+      g.clearRect(0, 0, av.width, av.height);
+      drawSprite(g, rows, PAL, 0, 0, 4);
+    }
+    frame();
+
+    var box = av.parentNode;
+    function happy(on){ st.happy = on; frame(); }
+    box.addEventListener("pointerenter", function(){ happy(true); });
+    box.addEventListener("pointerleave", function(){ happy(false); });
+    box.addEventListener("click", function(){ happy(true); setTimeout(function(){ happy(false); }, 1400); });
+
+    if (still) return;
+    var visible = true;
+    if ("IntersectionObserver" in window){
+      new IntersectionObserver(function(es){ visible = es[0].isIntersecting; }).observe(av);
+    }
+    setInterval(function(){
+      if (!visible || document.hidden) return;
+      st.inhale = !st.inhale; frame();
+    }, 900);
+    (function blink(){
+      setTimeout(function(){
+        if (visible && !document.hidden){
+          st.blink = true; frame();
+          setTimeout(function(){ st.blink = false; frame(); }, 140);
+          if (Math.random() < .25) setTimeout(function(){ st.blink = true; frame(); setTimeout(function(){ st.blink = false; frame(); }, 120); }, 300);
+        }
+        blink();
+      }, 2400 + Math.random() * 3200);
+    })();
+  })();
+
+  /* ---------------- pixel starfield with a little scroll parallax ---------------- */
+  (function(){
+    var cv = document.getElementById("sky");
+    if (!cv || !cv.getContext) return;
+    var g = cv.getContext("2d");
+    var PX = 3;                                   /* one sky pixel = 3 CSS px */
+    var TINTS = ["#f2e9dc","#f2e9dc","#a79ec4","#a79ec4","#5bd1ff","#ff4d8d","#ffc23d"];
+    var LEVELS = [.12, .3, .55, .85];             /* quantised twinkle */
+    var stars = [], W = 0, H = 0, t = 0, shoot = null, nextShoot = 6;
+
+    function seed(n){
+      stars = [];
+      for (var i = 0; i < n; i++){
+        var big = Math.random() < .08;
+        stars.push({
+          x: Math.random(), y: Math.random(),
+          depth: .02 + Math.random() * .1,        /* how much it drifts on scroll */
+          ph: Math.random() * 6.28, sp: .6 + Math.random() * 1.6,
+          c: TINTS[Math.floor(Math.random() * TINTS.length)], big: big
+        });
+      }
+    }
+    function size(){
+      var w = Math.ceil(window.innerWidth / PX), h = Math.ceil(window.innerHeight / PX);
+      if (w === W && Math.abs(h - H) < 40 && stars.length) return;   /* mobile URL bar */
+      W = w; H = h;
+      cv.width = W; cv.height = H;
+      cv.style.width = W * PX + "px"; cv.style.height = H * PX + "px";
+      seed(Math.round(W * H / 1000));
+      draw();
+    }
+    function dot(x, y, c, a){ g.globalAlpha = a; g.fillStyle = c; g.fillRect(x, y, 1, 1); }
+    function draw(){
+      g.clearRect(0, 0, W, H);
+      var sy = window.scrollY / PX;
+      for (var i = 0; i < stars.length; i++){
+        var s = stars[i];
+        var x = Math.floor(s.x * W);
+        var y = Math.floor(((s.y * H - sy * s.depth) % H + H) % H);
+        var lv = still ? 1 : Math.floor((Math.sin(t * s.sp + s.ph) + 1) / 2 * LEVELS.length * .999);
+        var a = LEVELS[lv];
+        dot(x, y, s.c, a);
+        if (s.big && lv >= 2){                  /* bright ones flare into a pixel cross */
+          var arm = a * .5;
+          dot(x - 1, y, s.c, arm); dot(x + 1, y, s.c, arm);
+          dot(x, y - 1, s.c, arm); dot(x, y + 1, s.c, arm);
+        }
+      }
+      if (shoot){
+        for (var k = 0; k < 7; k++){
+          dot(Math.round(shoot.x + k * 2), Math.round(shoot.y - k), "#f2e9dc", Math.max(0, .9 - k * .13));
+        }
+      }
+      g.globalAlpha = 1;
+    }
+
+    size();
+    window.addEventListener("resize", size);
+    if (still) return;
+
+    window.addEventListener("scroll", draw, {passive:true});
+    var last = 0;
+    function loop(now){
+      requestAnimationFrame(loop);
+      if (document.hidden || now - last < 83) return;       /* ~12 fps, on purpose */
+      var dt = Math.min(.2, (now - last) / 1000 || 0);
+      last = now; t += dt;
+      if (shoot){
+        shoot.x -= 4; shoot.y += 2;
+        if (shoot.x < -20 || shoot.y > H + 10) shoot = null;
+      } else if (t > nextShoot){
+        shoot = {x: W * (.35 + Math.random() * .65), y: Math.random() * H * .35};
+        nextShoot = t + 7 + Math.random() * 9;
+      }
+      draw();
+    }
+    requestAnimationFrame(loop);
+  })();
+
+  /* ---------------- reveal sections on scroll, count stats up ---------------- */
+  (function(){
+    if (!root.classList.contains("js-reveal")) return;
+    var rows = document.querySelectorAll(".stats > div");
+    for (var i = 0; i < rows.length; i++){
+      var sib = rows[i].parentNode.children;
+      rows[i].style.setProperty("--i", Array.prototype.indexOf.call(sib, rows[i]));
+    }
+    function countUp(el, delay){
+      var end = parseInt(el.textContent, 10), n = 0;
+      el.textContent = "0";
+      setTimeout(function(){
+        var id = setInterval(function(){
+          n++;
+          el.textContent = Math.round(end * n / 12);
+          if (n >= 12) clearInterval(id);
+        }, 75);
+      }, delay);
+    }
+    var io = new IntersectionObserver(function(entries){
+      for (var i = 0; i < entries.length; i++){
+        if (!entries[i].isIntersecting) continue;
+        var el = entries[i].target;
+        el.classList.add("in");
+        io.unobserve(el);
+        var vals = el.querySelectorAll(".stat-top .val");
+        for (var v = 0; v < vals.length; v++){
+          if (/^\d+$/.test(vals[v].textContent.trim())){
+            var row = vals[v].closest(".stats > div");
+            countUp(vals[v], 150 + (row ? +row.style.getPropertyValue("--i") : 0) * 90);
+          }
+        }
+      }
+    }, {rootMargin: "0px 0px -12% 0px"});
+    var els = document.querySelectorAll("main > section:not(.hero), .quest");
+    for (var j = 0; j < els.length; j++) io.observe(els[j]);
+  })();
 
   /* ---------------- bestiary ---------------- */
   var BESTIARY = [
